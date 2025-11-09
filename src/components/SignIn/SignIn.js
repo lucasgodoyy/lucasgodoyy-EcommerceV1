@@ -17,6 +17,10 @@ import ForgotPassword from './components/ForgotPassword';
 import AppTheme from '../../shared-theme/AppTheme';
 import ColorModeSelect from '../../shared-theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import { login } from "@/services/auth";
+import { useRouter } from "next/router";
+
+
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -61,6 +65,11 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props) {
+
+  const router = useRouter();
+
+
+
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
@@ -75,16 +84,28 @@ export default function SignIn(props) {
     setOpen(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
+    
+    event.preventDefault(); // impede o reload da página
+
     if (emailError || passwordError) {
-      event.preventDefault();
+      
       return;
     }
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const email = data.get('email');
+    const password = data.get('password');
+
+    try {
+    const result = await login(email, password); 
+    
+    router.push("/admin");
+
+    
+  } catch (error) {
+    alert('Email or password invalid');
+  }
+   
   };
 
   const validateInputs = () => {
@@ -93,13 +114,13 @@ export default function SignIn(props) {
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
+    if (!email.value) {
+        setEmailError(true);
+        setEmailErrorMessage('Please enter your username or email.');
+        isValid = false;
     } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+        setEmailError(false);
+        setEmailErrorMessage('');
     }
 
     if (!password.value || password.value.length < 6) {
@@ -107,11 +128,13 @@ export default function SignIn(props) {
       setPasswordErrorMessage('Password must be at least 6 characters long.');
       isValid = false;
     } else {
+      console.log('ssss');
       setPasswordError(false);
       setPasswordErrorMessage('');
     }
 
     return isValid;
+    
   };
 
   return (
